@@ -1,0 +1,190 @@
+Option Compare Text
+Option Explicit 
+Private WithEvents conn As ADODB.Connection
+Private WithEvents rs As ADODB.Recordset
+
+------------------------------------------------------------------------------------------------
+
+' Connect to a database
+Public Sub dbConnect(ConnectionString As String)
+
+  If Not conn Is Nothing Then
+    Debug.Print "A connection is already open."     ' for troubleshooting purpose
+    Exit Sub
+  End If
+  
+  Set conn = New ADODB.Connection
+  conn.Open
+  ConnectionString
+  
+End Sub 
+
+--------------------------------------------------------------------------------------------------
+
+' Close the connection
+Public Sub dbDisconnect()
+
+  If Not conn Is Nothing Then
+      If conn.State <> 0 Then
+        conn.Close
+      End If
+  Set conn = Nothing
+  End If
+  
+End Sub 
+  
+-------------------------------------------------------------------------------------------------  
+
+' Execute a SQL command while the connection is open
+Public Sub Execute(SQL As String)
+    If conn Is Nothing Then
+      Debug.Print "No connection open."
+      Exit Sub
+    End If
+    
+    conn.Execute (SQL)
+End Sub
+    
+-------------------------------------------------------------------------------------------------    
+
+' Opens a recordset from the database
+Public Function OpenRecordset(SQL As String, Optional CursorLocation As ADODB.CursorLocationEnum = adUseClient, Optional CursorType As ADODB.CursorTypeEnum = adOpenForwardOnly, Optional LockType As ADODB.LockTypeEnum = adLockReadOnly) As ADODB.Recordset
+  If conn Is Nothing Then
+    Debug.Print "No connection open."
+    Exit Function
+  End If     
+  
+  If Not rs Is Nothing Then
+    Debug.Print "A recordset is already open."
+    Exit Function
+  End If
+  
+  Set rs = New ADODB.Recordset
+  With rs
+    .CursorLocation = CursorLocation
+    .CursorType = CursorType
+    .LockType = LockType
+    .Open SQL, conn
+  End With
+  
+  Set OpenRecordset = rs
+End Sub
+  
+  -------------------------------------------------------------------------------------------------
+
+' Begin the db transaction
+Function Public Sub BeginTransaction()
+  conn.BeginTrans
+End Sub
+  
+-------------------------------------------------------------------------------------------------  
+
+' Commit the transaction
+Sub Public Sub CommitTransaction()
+  conn.CommitTrans
+End Sub
+  
+-------------------------------------------------------------------------------------------------  
+
+' Begins closing the transaction
+Public Sub RollbackTransaction()
+  conn.RollbackTrans
+End Sub 
+  
+-------------------------------------------------------------------------------------------------  
+
+' Confirms that the transaction has started
+Private Sub conn_BeginTransComplete(ByVal TransactionLevel As Long, ByVal pError As ADODB.Error, adStatus As ADODB.EventStatusEnum, ByVal pConnection As ADODB.Connection)    
+  Debug.Print "Transaction started."
+End Sub 
+
+-------------------------------------------------------------------------------------------------
+
+' Confirms that the transaction is committed on the server
+Private Sub conn_CommitTransComplete(ByVal pError As ADODB.Error, adStatus As ADODB.EventStatusEnum, ByVal pConnection As ADODB.Connection)    
+  Debug.Print "Transaction committed."
+End Sub 
+  
+-------------------------------------------------------------------------------------------------  
+
+' Sends the message that the connection has been made
+Private Sub conn_ConnectComplete(ByVal pError As ADODB.Error, adStatus As ADODB.EventStatusEnum, ByVal pConnection As ADODB.Connection) 
+
+End Sub 
+
+-------------------------------------------------------------------------------------------------
+
+' Sends the message that the connection has been closed
+Private Sub conn_Disconnect(adStatus As ADODB.EventStatusEnum, ByVal pConnection As ADODB.Connection) 
+
+End Sub 
+
+-------------------------------------------------------------------------------------------------
+
+' Sends the message that the SQL command has been sent
+Private Sub conn_ExecuteComplete(ByVal RecordsAffected As Long, ByVal pError As ADODB.Error, adStatus As ADODB.EventStatusEnum, ByVal pCommand As ADODB.Command, ByVal pRecordset As ADODB.Recordset, ByVal pConnection As ADODB.Connection)    
+  Debug.Print "SQL execution complete."
+End Sub 
+
+-------------------------------------------------------------------------------------------------
+
+' Sends the message that the rollback is complete
+Private Sub conn_RollbackTransComplete(ByVal pError As ADODB.Error, adStatus As ADODB.EventStatusEnum, ByVal pConnection As ADODB.Connection)    
+  Debug.Print "Transaction rolled back."
+End Sub
+
+
+
+-------------------------------------------------------------------------------------------------
+This would be a macro example of how to use the modules above: 
+-------------------------------------------------------------------------------------------------
+Const mnjConnString As String = "PROVIDER=SQLOLEDB;Password=65pl@5hmnt;Persist Security Info=True;User ID=planapp;Initial Catalog=PlanAppN;Data Source=LEMSSPROD180\LEMSSPROD;Use Procedure for Prepare=1;Auto Translate=True;Packet Size=4096;Workstation ID=NINJA_USER;Use Encryption for Data=False;Tag with column collation when possible=False;" 
+
+Private Sub btnSelect_Click() 
+'   Declare the variabels
+'   ---------------------    
+  Dim cnPubs As New dbCnxHelper
+  Dim rsPubs As ADODB.Recordset    
+  Dim sqlQuery As String
+  Dim strConn As String
+  Dim projName As String
+  Dim scenID As String
+  'On Error GoTo ErrorHandler  
+  
+'   Set the variables
+'   -----------------
+  Set rsPubs = New ADODB.Recordset
+  Application.ScreenUpdating = False
+  scenID = Cells.Find(What:=ComboBox1.Value, After:=ActiveCell, LookIn:=xlFormulas, LookAt:=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False).Offset(0, -1).Value
+  Unload Me
+  Range("$FA$1").Select
+  Range(Selection.End(xlToRight), Selection.End(xlDown)).ClearContents
+  Range("$A$1").Value = "overlay"
+  Range("$B$1").Value = "scen_id"
+  Range("$C$1").Value = "fab"
+  Range("$D$1").Value = "node"
+  Range("$E$1").Value = "part"
+  Range("$F$1").Value = "type"
+  Range("$G$1").Value = "WW"
+  Range("$H$1").Value = "wwcode"
+  Range("$I$1").Value = "type2"
+  Range("$J$1").Value = "Wafers"  
+  
+  '   Open the connection
+  '   -------------------
+  cnPubs.minjaConnect (mnjConnString)  
+  
+  '   Get the recordset
+  '   -----------------
+  sqlQuery = "SELECT * FROM dbo.zvw_fab_outs WHERE scen_id = '" & scenID & "';"
+  Set rsPubs = cnPubs.OpenRecordset(sqlQuery)
+  ActiveSheet.Range("$A$2").CopyFromRecordset rsPubs  
+  
+  '   Close the data connection and clear the variables
+  '   -------------------------------------------------    
+  cnPubs.Disconnect    
+  Set rsPubs = Nothing     
+  Range("$A$1").Select    
+  Application.ScreenUpdating = True
+
+End Sub
