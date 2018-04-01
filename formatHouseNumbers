@@ -1,0 +1,129 @@
+'************************************************************************************************************
+'*  PURPOSE: Separates the program numbers in master workbooks.
+'*  WRITTEN: 03Jul2017  Vincent Wilkinson
+'*  MODIFICATIONS:
+'*      20Jul2017  vwilkinson  Added routine to remove random text from House columns.
+'************************************************************************************************************
+
+' Turn off screen updating
+  Application.ScreenUpdating = False
+
+' Define the variables
+  Dim shtCurrent As Worksheet
+  Dim j As Integer
+  Dim i As Integer
+  Dim strFileName As String
+  Dim strExclusionDictionary As String
+  Dim MyArray As Variant
+  Dim element As Variant
+  Set shtCurrent = ActiveWorkbook.ActiveSheet
+
+' Trim the unneeded characters from the program numbers
+  Dim rCell As Range, strChar As String
+  strChar = "-"
+  For Each rCell In shtCurrent.Range("B4:P60").Cells
+    If Left(rCell.Value, 1) = strChar Then
+      rCell.Value = Mid(rCell.Value, 2, Len(rCell.Value) - 1)
+    ElseIf Right(rCell.Value, 1) = strChar Then
+      rCell.Value = Left(rCell.Value, Len(rCell.Value) - 1)
+    ElseIf Right(rCell.Value, 4) = "-???" Then
+      rCell.Value = Left(rCell.Value, Len(rCell.Value) - 4)
+    End If
+  Next rCell
+  
+' Shift existing columns over to make room for House # extraction
+  shtCurrent.Range("C:D").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+  shtCurrent.Range("F:G").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+  shtCurrent.Range("I:J").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+  shtCurrent.Range("L:M").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+  shtCurrent.Range("O:P").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+  shtCurrent.Range("R:S").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+  shtCurrent.Range("U:V").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
+
+' Enter the extraction formula into Cell C4 based on station (due to varying House # formats used in Log Grid by each station)
+  If Left(shtCurrent.Range("B1").Value, 4) = "KBVO" Or Left(shtCurrent.Range("B1").Value, 4) = "KCLO" Or Left(shtCurrent.Range("B1").Value, 4) = "KELO" Or Left(shtCurrent.Range("B1").Value, 4) = "KNVA" Or Left(shtCurrent.Range("B1").Value, 4) = "KOIN" Or Left(shtCurrent.Range("B1").Value, 4) = "KXAN" Or Left(shtCurrent.Range("B1").Value, 3) = "UTV" Then
+    shtCurrent.Range("C4") = "=IFERROR(RIGHT(B4,LEN(B4)-FIND(""$"",SUBSTITUTE(B4,""-"",""$"",LEN(B4)-LEN(SUBSTITUTE(B4,""-"",""""))))),"""")"
+  Else
+    If Left(shtCurrent.Range("B1").Value, 4) = "KRQE" Then 
+      MsgBox ("Don't forget to populate KBIM & NRQE with this information.")   ' a friendly reminder
+      shtCurrent.Range("C4") = "=TRIM(RIGHT(SUBSTITUTE(B4,"" "",REPT("" "",LEN(B4))),LEN(B4)))"
+  End If
+
+' Copy formula through Column C then to remaining House # columns
+  shtCurrent.Range("C4").AutoFill Destination:=shtCurrent.Range("C4:C51")
+  shtCurrent.Range("C4:C51").Copy Destination:=shtCurrent.Range("F4,I4,L4,O4,R4,U4")
+
+' Copy/paste values from formulas. Easier to make remaining steps work with values rather than formulas.
+  Application.DisplayAlerts = False
+  With Range("A1:Z70")
+    .Copy
+    .PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
+    Application.CutCopyMode = False
+  End With
+  shtCurrent.Range("A1").Select
+  Application.DisplayAlerts = True
+  
+' Get rid of the most common text fields that clutter the House # columns
+' ***********************************************************************************************************************************************    
+' The variable 'strExclusionDictionary' is the dictionary of text that will be removed from the House # columns. This variable & its    
+' routine will unclutter those columns. If this routine is removed, the defined words will appear randomly in the columns. You can add or remove
+' as many words as you'd like to this variable by following the comma separated format.
+' ***********************************************************************************************************************************************
+  strExclusionDictionary = "Program,Unit,A,AM,SIMUL,Williams,cc,Morning,PM,B,Chapel,(SRP),(2009),Warrior,Sunday,News,Doctors,Deal,Noon,Beautiful,Restless,Talk,Pelley,Outrage,Wait,Plan,(R),Scorpion,Colbert,Lives,Kelly,Show,Fallon,Myers,Night,(sb),Harry,SVU,Daily,The,CI,X-Files,S.H.I.E.L.D.,Phil"
+  MyArray = Split(strExclusionDictionary, ",")
+  For Each element In MyArray
+    Range("A4:V60").Replace What:=element, Replacement:="", LookAt:=xlWhole, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+  Next element
+  
+' For stations that use shortened House #s, trim to last segment of text.
+    If Left(shtCurrent.Range("B1").Value, 4) = "KRON" Then
+      For j = 2 To 20 Step 3
+        For i = 4 To 60
+          If shtCurrent.Range("$A$1").Offset(i, j) <> "" Then
+            shtCurrent.Range("$A$1").Offset(i, j).Value = "=TRIM(RIGHT(SUBSTITUTE(" & shtCurrent.Range("$A$1").Offset(i, (j - 1)).Address & ",""-"",REPT("" "",LEN(" & shtCurrent.Range("$A$1").Offset(i, (j - 1)).Address & "))),LEN(" & shtCurrent.Range("$A$1").Offset(i, (j - 1)).Address & ")))"
+          End If
+        Next i
+      Next j
+    End If
+    Application.DisplayAlerts = False
+    With Range("A1:Z70")
+      .Copy
+      .PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
+      Application.CutCopyMode = False
+    End With
+    shtCurrent.Range("A1").Select
+    Application.DisplayAlerts = True
+    
+' Enter the formulas required for grid audit. This prepares another set of columns for the Log Grid audit if performed.
+  shtCurrent.Range("D4:D51") = "=IF(C4="""","""",IFERROR(VLOOKUP(LEFT($B$2,3)&C4,$AG$5:$AH$400,2,FALSE),""AUDIT!""))"
+  shtCurrent.Range("G4:G51") = "=IF(F4="""","""",IFERROR(VLOOKUP(LEFT($E$2,3)&F4,$AG$5:$AH$400,2,FALSE),""AUDIT!""))"
+  shtCurrent.Range("J4:J51") = "=IF(I4="""","""",IFERROR(VLOOKUP(LEFT($H$2,3)&I4,$AG$5:$AH$400,2,FALSE),""AUDIT!""))"
+  shtCurrent.Range("M4:M51") = "=IF(L4="""","""",IFERROR(VLOOKUP(LEFT($K$2,3)&L4,$AG$5:$AH$400,2,FALSE),""AUDIT!""))"
+  shtCurrent.Range("P4:P51") = "=IF(O4="""","""",IFERROR(VLOOKUP(LEFT($N$2,3)&O4,$AG$5:$AH$400,2,FALSE),""AUDIT!""))"
+  shtCurrent.Range("S4:S51") = "=IF(R4="""","""",IFERROR(VLOOKUP(LEFT($Q$2,3)&R4,$AG$5:$AH$400,2,FALSE),""AUDIT!""))"
+  shtCurrent.Range("V4:V51") = "=IF(U4="""","""",IFERROR(VLOOKUP(LEFT($T$2,3)&U4,$AG$5:$AH$400,2,FALSE),""AUDIT!""))"
+  Range("D4, G4, J4, M4, P4, S4, V4").EntireColumn.Hidden = True
+
+' Address cells with MMDDYY
+' Haven't done this part yet....
+
+' Red fill cell X3 so the user knows where to paste the Log Gris if they do an audit.
+  With Range("X3").Interior
+    .Pattern = xlSolid
+    .PatternColorIndex = xlAutomatic
+    .Color = 255
+    .TintAndShade = 0
+    .PatternTintAndShade = 0
+  End With
+  
+' Clean up and exit
+  ActiveWindow.Zoom = 85
+  Application.ScreenUpdating = True
+  ActiveWindow.ScrollRow = 1
+  Exit
+  
+Sub errorHandler:    
+  Application.ScreenUpdating = True
+  MsgBox ("Oops! Something went wrong. Try closing and reopening the workbook.") 
+  
+End Sub
