@@ -1,0 +1,17 @@
+Private Sub UserForm_Initialize()
+ 
+    Dim fd As Office.FileDialog
+    Set fd = Application.FileDialog(msoFileDialogFilePicker)
+ 
+    With fd
+        .AllowMultiSelect = False
+        .Title = "File Selection"
+        .InitialFileName = "C:\"
+        .Filters.Clear
+        .Filters.Add "All Files", "*.jpg"       ' customize the default extension if desired
+        If .Show = True Then
+            TextBox1 = .SelectedItems(1)        ' replace TextBox1 with your textbox name
+        End If
+    End With
+ 
+End Sub
