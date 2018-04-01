@@ -1,0 +1,145 @@
+'**************************************************************************
+'*  PURPOSE: Compares workbooks for common sheets and reports on deltas.
+'*  WRITTEN: 11Jul2017  Vincent Wilkinson
+'*  MODIFICATIONS:
+'*
+'**************************************************************************
+Public Sub CompareWorkbooks()
+
+' Declare the Variables
+  Dim rptWB As Workbook, wb1 As Workbook, wb2 As Workbook, ws1 As Worksheet, ws2 As Worksheet
+  Dim DiffCount As Long, maxR As Long, lr1 As Long, lr2 As Long, r As Long
+  Dim lc1 As Integer, lc2 As Integer, c As Integer, maxC As Integer, cntSheets As Integer, cntMatch As Integer, i As Integer
+  Dim cf1 As String, cf2 As String, shtName As String, shtTest As String, shtTest2 As String
+  Dim fncCheck As Boolean
+  
+  glblError = False
+  UserForm1.Show
+  If glblError = True Then
+    Unload UserForm1
+    Exit Sub
+  Else
+    Set wb1 = Workbooks(wbOne)
+    Set wb2 = Workbooks(wbTwo)
+    Unload UserForm1
+  End If
+  
+  Application.ScreenUpdating = False
+  Application.StatusBar = "Creating the report page..."
+  
+  ' Count the number of sheets in wbOne
+    cntSheets = wb1.Worksheets.Count
+    
+  ' Setup the workbook to report the deltas
+    Set rptWB = Workbooks.Add
+    
+  ' Count the number of matching sheets between the two workbooks
+    Application.StatusBar = "Comparing the sheets..."
+    cntMatch = 0
+    For i = 1 To cntSheets
+      shtName = wb1.Worksheets(i).Name
+      fncCheck = wsCheck(shtName)
+      If fncCheck = True Then
+        If cntMatch > 0 Then
+          cntMatch = cntMatch - 1
+        Else
+          cntMatch = cntMatch + 1
+  
+        ' Compare the data and print deltas to new workbook
+          rptWB.ActiveSheet.Name = shtName
+          With wb1.Worksheets(shtName).UsedRange
+            lr1 = .Rows.Count
+            lc1 = .Columns.Count
+          End With
+          With wb2.Worksheets(shtName).UsedRange
+            lr2 = .Rows.Count
+            lc2 = .Columns.Count
+          End With
+          maxR = lr1
+          maxC = lc1
+          If maxR < lr2 Then maxR = lr2
+          If maxC < lc2 Then maxC = lc2
+          DiffCount = 0
+          For c = 1 To maxC
+            Application.StatusBar = "Comparing cells " & Format(c / maxC, "0 %") & "..."
+            For r = 1 To maxR
+              On Error Resume Next
+              cf1 = wb1.Sheets(shtName).Cells(r, c).Value
+              cf2 = wb2.Sheets(shtName).Cells(r, c).Value
+              On Error GoTo 0
+              If cf1 <> cf2 Then
+                DiffCount = DiffCount + 1
+                Cells(r, c).Formula = "'" & cf1 & " <> " & cf2
+              End If
+            Next r
+          Next c
+          
+          ' Format the report workbook
+          Application.StatusBar = "Formatting the report..."
+          With Range(Cells(1, 1), Cells(maxR, maxC))
+            .Interior.ColorIndex = 19
+            With .Borders(xlEdgeTop)
+              .LineStyle = xlContinuous
+              .Weight = xlHairline
+            End With
+            With .Borders(xlEdgeRight)
+              .LineStyle = xlContinuous
+              .Weight = xlHairline
+            End With
+            With .Borders(xlEdgeLeft)
+              .LineStyle = xlContinuous
+              .Weight = xlHairline
+            End With
+            With .Borders(xlEdgeBottom)
+              .LineStyle = xlContinuous
+              .Weight = xlHairline
+            End With
+            On Error Resume Next
+            With .Borders(xlInsideHorizontal)
+              .LineStyle = xlContinuous
+              .Weight = xlHairline
+            End With
+            With .Borders(xlInsideVertical)
+              .LineStyle = xlContinuous
+              .Weight = xlHairline
+            End With
+            On Error GoTo 0
+          End With
+          With ActiveWindow
+            .Zoom = 70
+            .ScrollRow = 1
+          End With
+          ActiveSheet.Cells.EntireColumn.AutoFit
+          If i < cntSheets Then rptWB.Sheets.Add
+        End If
+        On Error GoTo 0
+      Next i
+      
+' Report the number of matching sheets and end if there are none
+  Set rptWB = Nothing
+  Application.StatusBar = False
+  Application.ScreenUpdating = True
+  If cntMatch = 0 Then
+    MsgBox ("No matching sheets were found in both workbooks." & vbNewLine & "Check to see if there has been a change in sheet naming convention.")
+    Exit Sub
+  Else
+    MsgBox ("" & cntMatch & " matching sheets were found." & vbNewLine & "If you expected a different number, check the names of the sheets.")
+  End If
+  
+End Sub
+
+-----------------------------------------------------------------------------------------------------------
+Function wsCheck(sheetName As String) As Boolean
+  Dim valCheck As Variant
+  
+  wsCheck = False
+  On Error GoTo result2
+  valCheck = Workbooks(wbOne).Sheets(sheetName).Range("A1").Value
+  valCheck = Workbooks(wbTwo).Sheets(sheetName).Range("A1").Value
+  Exit Function
+  
+result2:
+  wsCheck = True 
+  
+End Function
+ 
