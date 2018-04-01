@@ -1,0 +1,17 @@
+'***************************************************************************
+'*  PURPOSE: Display filenames of all files in a folder.
+'*  WRITTEN: 12Jul2017
+'*  BY:  Vincent Wilkinson
+'*  MODIFICATIONS:
+'*
+'***************************************************************************
+Public Sub auditFilenames()
+
+Dim FileSystem As Object
+Dim HostFolder As String
+
+HostFolder = "C:\Users\--------\Desktop\stationFiles\"
+
+Set FileSystem = CreateObject("Scripting.FileSystemObject")
+DoFolder FileSystem.GetFolder(HostFolder)
+End Sub
