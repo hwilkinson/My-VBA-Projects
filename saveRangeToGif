@@ -1,0 +1,27 @@
+Sub CopyRangeToGIF()
+
+
+Dim rng As Excel.Range
+Dim cht As Excel.ChartObject
+
+Const strPath As String = "C:\chartStorage\"
+Application.ScreenUpdating = False
+
+
+Range("B3").Select
+Range(Selection, Selection.End(xlDown).Offset(3, 0)).Select
+
+Set rng = Selection
+rng.CopyPicture xlScreen, xlPicture
+Set cht = ActiveSheet.ChartObjects.Add(0, 0, rng.Width + 10, rng.Height + 10)
+cht.Chart.Paste
+cht.Chart.Export strPath & "myfile.gif"
+cht.Delete
+
+ExitProc:
+Application.ScreenUpdating = True
+
+Set cht = Nothing
+Set rng = Nothing
+
+End Sub
