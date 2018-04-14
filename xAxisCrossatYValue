@@ -1,0 +1,3 @@
+    ActiveSheet.ChartObjects("Chart 1").Activate
+    ActiveChart.Axes(xlValue).Select
+    ActiveChart.Axes(xlValue).CrossesAt = ActiveChart.Axes(xlValue).MinimumScale
