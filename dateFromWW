@@ -1,0 +1,53 @@
+Public Function dateFromWW(inWW As String) As String
+
+    Dim baseDate_m As Date
+    Dim dateCtr As Date
+    Dim weekCtr As Integer
+    Dim yrCtr As Integer
+    Dim longYrs As String
+    Dim inSplit() As String
+    Dim yrVal As Integer
+    Dim weekVal As Integer
+
+   
+
+    'Document years with 53 workweeks
+    longYrs = "2007,2012,2018,2024,2029"
+
+    ' Define base reference dates for WW-Date matching: last date of WW1 in year 2006
+    ' Company A base date is assumed to offset Intel calendar 4 days behind Company B calendar
+    baseDate_m = (#12/22/2006#)
+    inWW = Trim(inWW)
+    inSplit = Split(inWW, "-")
+    yrVal = inSplit(0)
+    weekVal = inSplit(1)
+
+   
+    'Search forward from base date for matching week interval
+    dateCtr = baseDate_m
+    weekCtr = 52
+    yrCtr = Val(Right(baseDate_m, 4))
+
+   
+    Do While yrCtr <= yrVal
+        If yrCtr = yrVal And weekCtr = weekVal Then
+            Exit Do
+            End If
+        dateCtr = dateCtr + 7
+        weekCtr = weekCtr + 1
+
+
+        'At end of each year, reset the ww counter, offsetting back one for years with 53 work weeks
+        If weekCtr > 52 Then
+            If longYrs Like "*" & yrCtr & "*" Then
+                weekCtr = 0
+                Else
+                weekCtr = 1
+                End If
+            yrCtr = yrCtr + 1
+            End If
+        Loop
+
+  dateFromWW = dateCtr
+
+End Function
