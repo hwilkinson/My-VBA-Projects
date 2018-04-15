@@ -1,0 +1,26 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
+  <ribbon startFromScratch="false">
+    <tabs>
+      <tab id="cpxTab" label="CapEx Operations" insertAfterMso="TabHome">
+
+        <group id="customGroup1" label="Data Tools">
+          <button id="btn01" label="Refresh Scenario Lists" size="large" onAction="refreshScenList" imageMso="Grouping" />
+          <button id="btn02" label="Retrieve Mz Data" size="large" onAction="retrieveProjection" imageMso="TableSharePointListsModifyColumnsAndSettings" />
+          <button id="btn03" label="Retrieve Ma Data" size="large" onAction="n_retrieveProjection" imageMso="FileDocumentEncrypt" />
+          <button id="btn04" label="Retrieve CapEx from DB" size="large" onAction="capexFromDB" imageMso="DatabaseAccessBackEnd" />
+          <button id="btn05" label="Refresh Conversion Table" size="large" onAction="btnRetrieveConversion" imageMso="FieldChooser" />
+        </group>
+
+        <group id="customGroup2" label="Other Functions">
+          <button id="btn06" label="Refresh Formulas" size="large" onAction="formulaCheck" imageMso="FunctionWizard" />
+          <button id="btn07" label="Send Data to DB" size="large" onAction="capexToDB" imageMso="AdpVerifySqlSyntax" />
+        </group>
+
+        <group id="customGroup3" label="Reset Workbook">
+          <button id="btn08" label="Reset Workbook" size="large" onAction="workbookReset" imageMso="Risks" />
+        </group>
+
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>
