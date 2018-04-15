@@ -1,0 +1,6 @@
+Uses multiple criteria to sum numbers in a list.
+
+=SUMPRODUCT(--(criteria1), --(criteria2), --(criteria3), rangetosearch)
+
+Example:
+=SUMPRODUCT(--(‘Sheet1’!A1:A100=“Yes”), --(‘Sheet2’!C1:C100=“PHOTO”), ‘Sheet1’!G1:G100)
