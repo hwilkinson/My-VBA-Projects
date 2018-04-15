@@ -1,0 +1,94 @@
+Public Sub sortDropdowns()
+
+' **********************************************************************************************************
+' *  Purpose: This macro sets the dropdowns and dependencies.                                                                                                                     *
+' *                                                                                                                                                                                                                                   *
+' *  Created:  1036722  18Mar2014                                                                                                                                                                         *
+' *  Modifications:                                                                                                                                                                                                       *
+' *                                                                                                                                                                                                                                   *
+' **********************************************************************************************************
+
+
+'   Declare the variables
+'   ---------------------
+    Dim i, cnt As Integer
+    Dim rCell As Range
+ 
+
+    ThisWorkbook.Names.Add Name:="convareas", RefersToR1C1:="='WS Conversion'!R2C14:R" & cnt & "C14"
+    Application.Goto ThisWorkbook.Worksheets("WS Conversion").Range("A1")
+    Selection.AutoFilter
+ 
+
+'   Format the dropdowns on each sheet
+'   ----------------------------------
+
+    With ThisWorkbook.Sheets("Adds-Cancels").Range("$C$5:$C$500").Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:=xlBetween, Formula1:="=areas"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = True
+    End With
+
+    ThisWorkbook.Sheets("Adds-Cancels").Range("$C$5").Value = ThisWorkbook.Sheets("WS Data").Range("$N$2").Value
+
+    With ThisWorkbook.Sheets("Adds-Cancels").Range("$D$5:$D$500").Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:=xlBetween, Formula1:="=INDIRECT($C5)"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = True
+    End With
+
+    Application.Goto ThisWorkbook.Sheets("Conversions").Range("A1")
+
+    With Range("$C$4:$F$500").Validation
+        .Delete
+        .Add Type:=xlValidateInputOnly, AlertStyle:=xlValidAlertStop, Operator:=xlBetween
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .ShowInput = True
+        .ShowError = True
+    End With
+
+    With Range("C4:C500").Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:=xlBetween, Formula1:="=convareas"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = True
+    End With
+
+    Range("C4").Value = ThisWorkbook.Sheets("WS Conversion").Range("N2").Value
+    ThisWorkbook.Sheets("Excess").Range("$A$3").Value = ThisWorkbook.Sheets("WS Data").Range("$N$2").Value
+
+    With ThisWorkbook.Sheets("Excess").Range("$B$3:$B$500").Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:=xlBetween, Formula1:="=INDIRECT($A3)"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = True
+    End With
+
+End Sub
