@@ -1,0 +1,29 @@
+Dim oleDataNav
+Const DN_OK = 0
+Const DN_NO_DATA = -1
+Public ColumnName
+
+Sub StartDataNav
+  Set oleDataNav = CreateObject("DataNavigator.Application")
+End Sub
+
+Sub StopDataNav
+  Set oleDataNav = Nothing
+End Sub
+
+Function CTPartGroup
+  With oleDataNav
+
+  If .SelectReportTab("New Reports") = DN_OK Then
+          .SetSite("xxxxxx")
+  End If  
+
+  If .SelectReportTab("Process Mgmt") = DN_OK AND _
+    .SetDates("BOW,-91","BOW,-1") = DN_OK AND _
+    .RunReport("Process Mgmt","GCP - DW - GCP Worksteps Completed by Workweek","""AVERAGE HOURS"",""WORKSTEPS COMPLETED BY WORKWEEK"",""'ALLSTEPS'""") >= DN_NO_DATA Then
+    .SaveAs("C:\scripting\working\raw_data.tsv")
+    .ClearFilters()
+  End If        
+
+  End With
+End Function
