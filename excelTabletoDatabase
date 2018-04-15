@@ -1,0 +1,139 @@
+Sub addToDB(control As IRibbonControl)
+
+'***********************************************************
+'*  PURPOSE: This macro creates a new table in the ATCP db and inserts the data.                                                                            *
+'*                                                                                                                            *
+'*  CREATED:   1036722  10Feb2014                                                                *
+'*                                                                                                                            *
+'*  MODIFICATIONS:                                                                                           *
+'*                                                                                                                            *
+'***********************************************************
+
+'   Declare the variabels
+'   ---------------------
+
+    Dim cnPubs As ADODB.Connection
+    Dim cnt, cnt2, x, s As Integer
+    Dim strtRange As Range
+    Dim sqlQuery, sqlQuery1, strConn, projName, scenID As String
+    On Error GoTo ErrorHandler
+
+ 
+'   Set the variables
+'   -----------------
+    Set cnPubs = New ADODB.Connection
+    Range("$FA$1:$GA$1").ClearContents
+    cnt = Application.WorksheetFunction.CountA(Range("A:A")) - 2
+    cnt2 = Application.WorksheetFunction.CountA(Range("1:1"))
+    Application.ScreenUpdating = False
+
+ 
+'   Find out if this is a new or existing table in the DB
+'   -----------------------------------------------------
+    If MsgBox("You can create a new table in the database or use an existing one." & vbNewLine & vbNewLine & "Are you creating a new table?", vbYesNo) = vbNo Then askTable.Show
+    If Range("$FA$1").Value = "cancel" Then Exit Sub
+    If Range("$FA$1").Value = "continue" Then projName = Range("$GA$1").Value: GoTo justAddData
+
+ 
+'   Request a name for the table
+'   ----------------------------
+retry:
+    projName = Application.InputBox(Prompt:="Enter a name for your new table:", Title:="TABLE NAME")
+
+    If projName = "False" Then
+        MsgBox "Action cancelled by user."
+        Exit Sub
+    ElseIf projName = vbNullString Then
+        GoTo retry
+    ElseIf Len(projName) > 20 Then
+        MsgBox "Are you serious? Keep it under 20 characters."
+        GoTo retry
+    Else
+        projName = Replace(projName, " ", "_")
+    End If
+
+ 
+'   Create the table SQL and execute
+'   --------------------------------
+    ActiveSheet.Range("A1").Select
+    x = 0
+    sqlQuery = ""
+    sqlQuery = "CREATE TABLE " & projName & "("
+
+    Do Until ActiveCell.Offset(0, x) = ""
+        sqlQuery = sqlQuery & ActiveCell.Offset(0, x).Value & " " & ActiveCell.Offset(1, x).Value
+        x = x + 1
+        If ActiveCell.Offset(0, x) <> "" Then sqlQuery = sqlQuery & ","
+    Loop
+    sqlQuery = sqlQuery & ");"
+    Range("$FA$1").Value = "crTable"
+
+ 
+'   Check that data is where it's supposed to be
+'   --------------------------------------------
+justAddData:
+    If MsgBox("Row 1: field names" & vbNewLine & "Row 2: data type" & vbNewLine & "Row 3: start the data." & vbNewLine & vbNewLine & "Ready?", vbYesNo) = vbNo Then Exit Sub
+
+ 
+'   Create the connection string and open connection
+'   ------------------------------------------------
+    strConn = "PROVIDER=SQLOLEDB;"
+    strConn = strConn & "Persist Security Info=True;User ID=DATABASE;Initial Catalog=ATCP;Data Source=LEMSSPROD180\LEMSSPROD180;Use Procedure for Prepare=1;Auto Translate=True;Password=PASSWORD;Packet Size=4096;Workstation ID=ATCP;Use Encryption for Data=False;Tag with column collation when possible=False;"
+    cnPubs.Open strConn
+    If Range("$FA$1").Value = "crTable" Then cnPubs.Execute sqlQuery
+
+ 
+'   Create the SQL to insert the values and execute
+'   -----------------------------------------------
+    sqlQuery1 = ""
+    sqlQuery1 = "INSERT INTO dbo." & projName & " ("
+    For x = 0 To cnt2
+        sqlQuery1 = sqlQuery1 & ActiveCell.Offset(0, x).Value
+        If ActiveCell.Offset(0, (x + 1)) <> "" Then sqlQuery1 = sqlQuery1 & ","
+    Next x
+    sqlQuery1 = sqlQuery1 & ") "
+
+    sqlQuery = ""
+    sqlQuery = sqlQuery & "VALUES ('"
+    For s = 2 To cnt + 1
+        For x = 0 To cnt2
+            sqlQuery = sqlQuery & ActiveCell.Offset(s, x).Value
+            If x < cnt2 - 1 Then sqlQuery = sqlQuery & "','"
+        Next x
+    sqlQuery = sqlQuery1 & sqlQuery & "');"
+    cnPubs.Execute sqlQuery
+    sqlQuery = ""
+    sqlQuery = sqlQuery & "VALUES ('"
+    Next s
+
+ 
+'   Close the connection
+'   --------------------
+    cnPubs.Close
+    Set cnPubs = Nothing
+
+ 
+'   Clean Up and Exit
+'   -----------------
+    Application.ScreenUpdating = True
+    Application.GoTo ActiveSheet.Range("$A$1")
+    MsgBox "Process completed successfully."
+    Exit Sub
+
+ 
+
+'   ---------------------------------------------
+ErrorHandler:
+    Dim lStr_Message As String
+    lStr_Message = ""
+    lStr_Message = lStr_Message & _
+        Chr(10) & _
+        Chr(10) & "Error Number: " & Err & _
+        Chr(10) & "Error Description: " & Error()
+
+    cnPubs.Close
+    Set cnPubs = Nothing
+    MsgBox lStr_Message
+    Application.ScreenUpdating = True
+
+End Sub
