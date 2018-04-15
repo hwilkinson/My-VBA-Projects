@@ -1,0 +1,166 @@
+Sub CreatePowerPoint()
+
+  'In Excel, make sure you add a reference to the Microsoft PowerPoint Library by:
+    '1. Go to Tools in the VBA menu
+    '2. Click on Reference
+    '3. Scroll down to Microsoft PowerPoint X.0 Object Library, check the box, and press OK 
+
+    'Declare the variables
+        Dim newPowerPoint As PowerPoint.Application
+        Dim activeSlide As PowerPoint.Slide
+        Dim cht As Excel.ChartObject
+        Dim fName, tName, desktopfolder As String
+        Application.ScreenUpdating = "False"
+ 
+
+     'Look for existing instance
+        desktopfolder = Get_SpecialFolderPath("Desktop")
+        On Error Resume Next
+        Set newPowerPoint = GetObject(, "PowerPoint.Application")
+        On Error GoTo 0
+ 
+
+    'Create a new PowerPoint
+        If newPowerPoint Is Nothing Then
+            Set newPowerPoint = New PowerPoint.Application
+        End If
+ 
+
+    'Make a presentation in PowerPoint
+        If newPowerPoint.Presentations.Count = 0 Then
+            newPowerPoint.Presentations.Add
+        End If
+ 
+
+    'Show the PowerPoint
+        newPowerPoint.Visible = True
+ 
+
+    'Add a new slide where we will paste the chart
+        newPowerPoint.ActivePresentation.Slides.Add newPowerPoint.ActivePresentation.Slides.Count + 1, ppLayoutText
+        newPowerPoint.ActiveWindow.View.GotoSlide newPowerPoint.ActivePresentation.Slides.Count
+        Set activeSlide = newPowerPoint.ActivePresentation.Slides(newPowerPoint.ActivePresentation.Slides.Count)
+
+    'Set the title of the slide and change the background to black
+        tName = Range("B2").Value
+        tName = Replace(tName, " ", "_")
+
+        With activeSlide
+            .FollowMasterBackground = False
+            .Background.Fill.Solid
+            .Background.Fill.ForeColor.RGB = RGB(0, 0, 0)
+        End With
+        activeSlide.Shapes(1).TextFrame.TextRange.Text = Range("B2").Value
+        activeSlide.Shapes(1).TextFrame.TextRange.Font.Color.RGB = RGB(255, 255, 255)
+        fName = "https://web.xxxxxxxxxx.com/sites/planSubcom/Shared Documents/" & tName & ".ppt"
+
+'        fName = desktopfolder & "\" & tName & ".pptx"
+        With activeSlide.Shapes(1)
+            .Left = 10
+            .Top = 10
+            .Height = 50
+            .Width = 700
+        End With
+        activeSlide.Shapes(2).Delete
+
+ 
+
+    'Copy the Summary Bar and paste it into the PowerPoint as a Metafile Picture
+
+        Workbooks("Summary Template.xlsm").Sheets("Template").Range("B2:Q7").Select
+        Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+        activeSlide.Shapes.PasteSpecial(DataType:=ppPasteMetafileJPG).Select
+
+    'Adjust the positioning of the Summary Bar on Powerpoint Slide
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Left = 10
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Top = 75
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Width = 700
+
+ 
+    'Copy each chart to the PowerPoint Slide
+
+        'Upper left
+
+        Workbooks("Summary Template.xlsm").Sheets("Template").ChartObjects("Chart 2").Chart.CopyPicture _
+                Appearance:=xlScreen, Size:=xlScreen, Format:=xlPicture
+
+        activeSlide.Shapes.Paste.Select
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Left = 10
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Top = 160
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Width = 325
+ 
+
+        'Upper right
+
+        Workbooks("Summary Template.xlsm").Sheets("Template").ChartObjects("Chart 1").Chart.CopyPicture _
+                Appearance:=xlScreen, Size:=xlScreen, Format:=xlPicture
+       
+        activeSlide.Shapes.Paste.Select
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Left = 380
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Top = 160
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Width = 325
+
+ 
+
+        'Lower left
+        Workbooks("Summary Template.xlsm").Sheets("Template").ChartObjects("Chart 4").Chart.CopyPicture _
+                Appearance:=xlScreen, Size:=xlScreen, Format:=xlPicture
+
+        activeSlide.Shapes.Paste.Select
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Left = 10
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Top = 320
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Width = 325
+
+ 
+
+        'Lower right
+        Workbooks("Summary Template.xlsm").Sheets("Template").Range("J21:Q32").Select
+        Selection.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+        activeSlide.Shapes.PasteSpecial(DataType:=ppPasteMetafileJPG).Select
+
+ 
+
+    'Adjust the positioning of the Summary Bar on Powerpoint Slide
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Left = 360
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Top = 320
+        newPowerPoint.ActiveWindow.Selection.ShapeRange.Width = 345 
+
+    'Check to see if file already exists. If so, end; if not, save.
+        On Error GoTo fallout
+            Check = MsgBox("Upload to site?", vbYesNoCancel)
+            If Check = vbCancel Or Check = vbNo Then
+                Cancel = True
+            Else
+                newPowerPoint.ActivePresentation.SaveAs fName, 1
+                newPowerPoint.Quit
+                Application.ScreenUpdating = "True"
+                MsgBox "Summary slide has been successfully uploaded to the Shared Documents library."
+            End If
+    Range("A1").Select
+    Exit Sub
+   
+
+fallout:
+        On Error GoTo fallout2
+        newPowerPoint.ActivePresentation.SaveAs fName, 1
+        newPowerPoint.Quit
+        Application.ScreenUpdating = "True"
+        MsgBox "Summary slide has been successfully uploaded to the Shared Documents library."
+        Exit Sub
+
+   
+
+fallout2:
+        Application.ScreenUpdating = "True"
+        MsgBox fName & " already exists or server error. File is not saved."
+End Sub
+
+
+Private Function Get_SpecialFolderPath(strSpecialFolder) As String
+    Dim WSshell As Object
+
+    Set WSshell = CreateObject("WScript.Shell")
+    Get_SpecialFolderPath = WSshell.SpecialFolders(strSpecialFolder)
+    Set WSshell = Nothing
+
+End Function
