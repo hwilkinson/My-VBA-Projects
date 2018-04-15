@@ -1,0 +1,13 @@
+Private Sub wait_file()
+
+Dim TheFile As String
+
+TheFile = "C:\Audit_Package\working\algn.*"
+TheFile2 = "C:\Audit_Package\working\rawdata.*"
+
+Do While Dir(TheFile) = "" And Dir(TheFile2) = ""
+    Application.Wait (Now + TimeValue("0:00:10"))
+Loop
+
+
+End Sub
