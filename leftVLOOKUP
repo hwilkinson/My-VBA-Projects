@@ -1,0 +1,21 @@
+Excel Left Lookup Formula Overview
+
+Excel's VLOOKUP function is used to find and return information from a table of data based on a lookup value that you choose.
+Normally, VLOOKUP requires the lookup value to be in the left-most column of the table of data, and the function returns another field of data located in the same row to the right of this value.
+By combining VLOOKUP with the CHOOSE function; however, a left lookup formula can be created that will:
+
+    permits the lookup value to be chosen from any column in the data table
+    return information located in any column to the left of the lookup value
+
+Example: Using the VLOOKUP and CHOOSE Functions in a Left Lookup Formula
+The steps detailed below create the left lookup formula seen in the image above.
+The formula
+
+ =VLOOKUP($D$2,CHOOSE({1,2},$F:$F,$D:$D),2,FALSE)
+
+makes it possible to find the part supplied by the different companies listed in column 3 of the data table.
+The job of the CHOOSE function in the formula is to trick VLOOKUP into believing that column 3 is actually column 1. As a result, the Company's name can be used as the lookup value to find the name of the part supplied by each company.
+
+ 
+
+Pasted from <http://spreadsheets.about.com/od/tipsandfaqs/ss/2013-09-01-excel-left-lookup-vlookup.htm>
